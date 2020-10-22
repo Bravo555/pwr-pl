@@ -15,6 +15,7 @@ public class Camera {
     public Camera(int width, int height) {
         this.width = width;
         this.height = height;
+        this.zoom = 1.0f;
     }
 
     public void selectMap(Map map) throws Exception {
@@ -45,10 +46,10 @@ public class Camera {
         // TODO: replace with some smart and funky matrix math
         float x_view_left = x - width * (1/zoom);
         float x_view_right = x + width * (1/zoom);
-        float y_view_top = y - height * (1/zoom);
-        float y_view_bottom = y + height * (1/zoom);
+        float y_view_top = y + height * (1/zoom);
+        float y_view_bottom = y - height * (1/zoom);
 
-        return x_view_left < point.x && point.x < x_view_right &&
-                y_view_bottom < point.y && point.y < y_view_top;
+        return x_view_left < point.x() && point.x() < x_view_right &&
+                y_view_bottom < point.y() && point.y() < y_view_top;
     }
 }

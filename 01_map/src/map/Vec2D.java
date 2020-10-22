@@ -9,6 +9,14 @@ public final class Vec2D {
     float x() { return x; }
     float y() { return y; }
 
-    final float x;
-    final float y;
+    @Override
+    public String toString() {
+        return "Vec2D{" +
+                "x=" + x +
+                ", y=" + y +
+                '}';
+    }
+
+    private final float x;
+    private final float y;
 }

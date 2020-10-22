@@ -1,49 +1,100 @@
 package map;
 
 import java.io.IOException;
+import java.util.NoSuchElementException;
+import java.util.Scanner;
 
 public class App {
+    static Map map;
+
     public static void main(String[] args) {
-        System.out.println("Autor: Marcel Guzik");
+        System.out.println("Autor: Marcel Guzik\n");
+        printHelpMsg();
+        System.out.println("\n");
 
-        Map map;
-        try {
-            map = Map.loadFromFile("map.txt");
-        } catch (MapException e) {
-            System.out.println("invalid data: " + e.getLocalizedMessage());
-            return;
-        } catch (IOException e) {
-            System.out.println("file error:");
-            e.printStackTrace();
-            return;
+        boolean exit = false;
+        while(!exit) {
+            String input = ConsoleUserDialog.enterString("> ");
+            Scanner s = new Scanner(input);
+            if(!s.hasNext()) continue;
+            String cmd = s.next();
+
+            switch (cmd) {
+                case "h":
+                    printHelpMsg();
+                    break;
+                case "q":
+                    exit = true;
+                    break;
+                case "l":
+                    String filename = s.next(); // TODO: add support for filenames with spaces
+                    try {
+                        map = Map.loadFromFile(filename);
+                    } catch (MapException e) {
+                        System.out.println("invalid data: " + e.getLocalizedMessage());
+                        break;
+                    } catch (IOException e) {
+                        System.out.println("file error:");
+                        e.printStackTrace();
+                        break;
+                    }
+                    System.out.println("Map " + map.getName() + " loaded.");
+                    break;
+                case "s":
+                    try {
+                        String filename_rly = s.next(); // TODO: add support for filenames with spaces
+                        map.saveToFile(filename_rly);
+                    } catch (NoSuchElementException e) {
+                        System.out.println("wrong format!");
+                        printHelpMsg();
+                    } catch (IOException e) {
+                        System.out.println("file error:");
+                        e.printStackTrace();
+                        break;
+                    }
+                    break;
+                case "a":
+                    float x, y;
+                    String name;
+                    try {
+                        x = s.nextFloat();
+                        y = s.nextFloat();
+                        s.skip(" ");
+                        name = s.nextLine();
+                    } catch (NoSuchElementException e) {
+                        System.out.println("wrong format!");
+                        printHelpMsg();
+                        break;
+                    }
+
+                    map.addPointOfInterest(name, x, y);
+
+                case "p":
+                    System.out.println("Nazwa mapy: " + map.getName());
+                    System.out.println("Wydawnictwo: " + map.getPublisher());
+                    System.out.println(String.format("Wymiary: x: %d, y: %d",
+                            map.getWidth(), map.getHeight(), map.getScale()));
+                    System.out.println("Punkty zainteresowania:");
+                    map.getPointsOfInterest().stream().forEach(
+                        (poi) -> System.out.printf("\t%s - x: %f, y: %f\n",
+                                poi.getName(), poi.getPoint().x(), poi.getPoint().y())
+                    );
+                    break;
+                default:
+                    printHelpMsg();
+                    break;
+            }
         }
+    }
 
-        System.out.println("wczytano nastepujace dane:");
-        System.out.println(map.toString());
+    static void printHelpMsg() {
+        System.out.println("help:");
+        System.out.println("l map_file.txt\t\tload the map from file");
+        System.out.println("s map_file.txt\t\tsave the map to file");
+        System.out.println("a x y name\t\t\tadd point of interest");
+        System.out.println("p\t\t\t\t\tprint current map data");
+        System.out.println("h\t\t\t\t\tthis help message");
+        System.out.println("q\t\t\t\t\texit");
 
-        try {
-            map.setName("Kraśnik");
-            map.saveToFile("krasnik_map.txt");
-        } catch (MapException e) {
-            System.out.println("wrong map name!");
-            return;
-        } catch (IOException e) {
-            System.out.println("error while writing to file:");
-            e.printStackTrace();
-        }
-
-//        Camera camera = new Camera(640, 480);
-//
-//        try {
-//            camera.selectMap(map);
-//        }
-//        catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//
-//        // inspect a part of the map
-//        camera.setOrigin(42.0f, 6.9f);
-//
-//        var pois = camera.getVisiblePois();
     }
 }

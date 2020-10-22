@@ -28,29 +28,40 @@ public class Map {
         int width = scanner.nextInt();
         int height = scanner.nextInt();
         int scale = scanner.nextInt();
-        scanner.nextLine();
+        scanner.skip("\n");
         String name = scanner.nextLine();
         String publisher = scanner.nextLine();
-
         List<PointOfInterest> pois = new ArrayList<>();
-        scanner.nextLine();
+        Map map = new Map(width, height, scale, name, publisher);
+        map.pointsOfInterest = pois;
+        if(!scanner.hasNext()) {
+            return map;
+        }
+        scanner.skip("\n");
         while (scanner.hasNextLine()) {
             float x = scanner.nextFloat();
             float y = scanner.nextFloat();
+            scanner.skip(" "); // remove space after last coordinate
             String poiName = scanner.nextLine();
-            PointOfInterest poi = new PointOfInterest(name, new Vec2D(x, y));
+            PointOfInterest poi = new PointOfInterest(poiName, new Vec2D(x, y));
             pois.add(poi);
         }
 
-        Map map = new Map(width, height, scale, name, publisher);
-        map.pointsOfInterest = pois;
         return map;
     }
 
     public void saveToFile(String filename) throws IOException {
         FileWriter writer = new FileWriter(filename);
-        writer.write(String.format("%d %d %d\n%s\n%s\n", width, height, scale, name, publisher));
+        writer.write(String.format("%d %d %d\n%s\n%s\n\n", width, height, scale, name, publisher));
+        for(PointOfInterest poi: pointsOfInterest) {
+            writer.write(String.format("%f %f %s\n", poi.getPoint().x(), poi.getPoint().y(), poi.getName()));
+        }
         writer.close();
+    }
+
+    public void addPointOfInterest(String name, float x, float y) {
+        Vec2D point = new Vec2D(x, y);
+        pointsOfInterest.add(new PointOfInterest(name, point));
     }
 
     public int getWidth() {
@@ -59,6 +70,18 @@ public class Map {
 
     public int getHeight() {
         return height;
+    }
+
+    public int getScale() {
+        return scale;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getPublisher() {
+        return publisher;
     }
 
     public void setName(String name) throws MapException {

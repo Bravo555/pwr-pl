@@ -16,6 +16,14 @@ public class PointOfInterest {
         return point;
     }
 
-    final Vec2D point;
-    final String name;
+    @Override
+    public String toString() {
+        return "PointOfInterest{" +
+                "name='" + name + '\'' +
+                ", point=" + point +
+                '}';
+    }
+
+    private final String name;
+    private final Vec2D point;
 }
