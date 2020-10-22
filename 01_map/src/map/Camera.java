@@ -12,9 +12,14 @@ public class Camera {
     private float zoom;
     private Map map;
 
+    public Camera(int width, int height) {
+        this.width = width;
+        this.height = height;
+    }
+
     public void selectMap(Map map) throws Exception {
         if(map == null) {
-            throw new Exception("map can't be null");
+            throw new MapException("map can't be null");
         }
         this.map = map;
     }
@@ -28,8 +33,11 @@ public class Camera {
         this.y = Math.min(y, map.getHeight());
     }
 
-    public List<Vec2D> getVisiblePois() {
-        return map.getPointsOfInterest().stream().filter(this::isVisible).collect(Collectors.toUnmodifiableList());
+    public List<PointOfInterest> getVisiblePois() {
+        return map.getPointsOfInterest().
+                stream().
+                filter((poi) -> isVisible(poi.getPoint())).
+                collect(Collectors.toUnmodifiableList());
     }
 
     // is the point under provided absolute coordinates visible by the camera
