@@ -1,6 +1,6 @@
-package map;
+package app.map;
 
-class MapException extends Exception {
+public class MapException extends Exception {
     public MapException(String message) {
         super(message);
     }

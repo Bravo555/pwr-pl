@@ -1,4 +1,6 @@
-package map;
+// Marcel Guzik
+
+package app.map;
 
 public final class Vec2D {
     public Vec2D(float x, float y) {
@@ -6,8 +8,8 @@ public final class Vec2D {
         this.y = y;
     }
 
-    float x() { return x; }
-    float y() { return y; }
+    public float x() { return x; }
+    public float y() { return y; }
 
     @Override
     public String toString() {

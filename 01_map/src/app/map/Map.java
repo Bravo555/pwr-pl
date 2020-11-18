@@ -1,18 +1,26 @@
-package map;
+package app.map;
 
 // Autor: Marcel Guzik
 // Data: 12 Pazdziernika 2020
 // Grupa: Poniedzialek 14
 //
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-public class Map {
+public class Map implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    public Map() {
+        try {
+            new Map(0, 0, 1, "new map", "new publisher");
+        } catch (MapException e) {
+            // UNREACHABLE
+        }
+    }
+
     public Map(int width, int height, int scale, String name, String publisher) throws MapException {
         this.width = width;
         this.height = height;
@@ -23,7 +31,18 @@ public class Map {
     }
 
     public static Map loadFromFile(String filename) throws IOException, MapException {
-        Scanner scanner = new Scanner(new File(filename));
+        return loadFromFile(new File(filename));
+    }
+
+    public static Map loadFromFile(File file) throws IOException, MapException {
+        try(ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream(file))) {
+            Map map = (Map) inputStream.readObject();
+        } catch(ClassNotFoundException e) {
+            // ... theoretically shouldn't happen...?
+        }
+
+
+        Scanner scanner = new Scanner(file);
 
         int width = scanner.nextInt();
         int height = scanner.nextInt();
@@ -51,7 +70,12 @@ public class Map {
     }
 
     public void saveToFile(String filename) throws IOException {
-        FileWriter writer = new FileWriter(filename);
+        saveToFile(new File(filename));
+    }
+
+    public void saveToFile(File file) throws IOException {
+        
+        FileWriter writer = new FileWriter(file);
         writer.write(String.format("%d %d %d\n%s\n%s\n\n", width, height, scale, name, publisher));
         for(PointOfInterest poi: pointsOfInterest) {
             writer.write(String.format("%f %f %s\n", poi.getPoint().x(), poi.getPoint().y(), poi.getName()));
@@ -88,6 +112,19 @@ public class Map {
         this.name = validateString(name);
     }
 
+    public void setPublisher(String publisher) throws MapException {
+        this.publisher = validateString(publisher);
+    }
+
+    public void setDimensions(int x, int y) {
+        this.width = x;
+        this.height = y;
+    }
+
+    public void setScale(int scale) {
+        this.scale = scale;
+    }
+
     public String validateString(String str) throws MapException {
         if(str == null || str.equals("") || str.contains("\n")) {
             throw new MapException("Name can't be null or empty or contain newlines");
@@ -115,10 +152,10 @@ public class Map {
                 '}';
     }
 
-    private final int width;
-    private final int height;
+    private int width;
+    private int height;
     // amount of real world distance unit equivalent to 1 map unit
-    private final int scale;
+    private int scale;
     // name of the map
     private String name;
     // published of the map (idk what it's for)

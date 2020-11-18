@@ -1,13 +1,16 @@
-package map;
+package app.console;
+
+import app.map.Map;
+import app.map.MapException;
 
 import java.io.IOException;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
-public class App {
+public class ConsoleApp {
     static Map map;
 
-    public static void main(String[] args) {
+    public static void test(String[] args) {
         System.out.println("Autor: Marcel Guzik\n");
         printHelpMsg();
         System.out.println("\n");

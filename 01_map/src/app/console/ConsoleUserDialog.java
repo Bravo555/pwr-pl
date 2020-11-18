@@ -1,4 +1,4 @@
-package map;
+package app.console;
 
 import java.util.Scanner;
 import java.util.function.Function;

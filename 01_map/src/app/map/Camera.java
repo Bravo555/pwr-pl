@@ -1,4 +1,5 @@
-package map;
+// Marcel Guzik
+package app.map;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,7 +42,7 @@ public class Camera {
                 collect(Collectors.toUnmodifiableList());
     }
 
-    // is the point under provided absolute coordinates visible by the camera
+    // is the point at provided absolute coordinates visible by the camera
     public boolean isVisible(Vec2D point) {
         // TODO: replace with some smart and funky matrix math
         float x_view_left = x - width * (1/zoom);

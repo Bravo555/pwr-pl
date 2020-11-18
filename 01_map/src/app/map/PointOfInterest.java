@@ -1,4 +1,5 @@
-package map;
+// Marcel Guzik
+package app.map;
 
 import java.util.Objects;
 
