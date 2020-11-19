@@ -8,17 +8,17 @@ package app.map;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
-public class Map implements Serializable {
+public class Map implements Serializable, Comparable {
     private static final long serialVersionUID = 1L;
 
     public Map() {
-        try {
-            new Map(0, 0, 1, "new map", "new publisher");
-        } catch (MapException e) {
-            // UNREACHABLE
-        }
+        this.width = 0;
+        this.height = 0;
+        this.scale = 1;
+        this.name = "test map";
+        this.publisher = "test publisher";
+        this.pointsOfInterest = new ArrayList<>();
     }
 
     public Map(int width, int height, int scale, String name, String publisher) throws MapException {
@@ -37,36 +37,11 @@ public class Map implements Serializable {
     public static Map loadFromFile(File file) throws IOException, MapException {
         try(ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream(file))) {
             Map map = (Map) inputStream.readObject();
+            return map;
         } catch(ClassNotFoundException e) {
             // ... theoretically shouldn't happen...?
         }
-
-
-        Scanner scanner = new Scanner(file);
-
-        int width = scanner.nextInt();
-        int height = scanner.nextInt();
-        int scale = scanner.nextInt();
-        scanner.skip("\n");
-        String name = scanner.nextLine();
-        String publisher = scanner.nextLine();
-        List<PointOfInterest> pois = new ArrayList<>();
-        Map map = new Map(width, height, scale, name, publisher);
-        map.pointsOfInterest = pois;
-        if(!scanner.hasNext()) {
-            return map;
-        }
-        scanner.skip("\n");
-        while (scanner.hasNextLine()) {
-            float x = scanner.nextFloat();
-            float y = scanner.nextFloat();
-            scanner.skip(" "); // remove space after last coordinate
-            String poiName = scanner.nextLine();
-            PointOfInterest poi = new PointOfInterest(poiName, new Vec2D(x, y));
-            pois.add(poi);
-        }
-
-        return map;
+        return null;
     }
 
     public void saveToFile(String filename) throws IOException {
@@ -74,18 +49,13 @@ public class Map implements Serializable {
     }
 
     public void saveToFile(File file) throws IOException {
-        
-        FileWriter writer = new FileWriter(file);
-        writer.write(String.format("%d %d %d\n%s\n%s\n\n", width, height, scale, name, publisher));
-        for(PointOfInterest poi: pointsOfInterest) {
-            writer.write(String.format("%f %f %s\n", poi.getPoint().x(), poi.getPoint().y(), poi.getName()));
+        try(ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(file))) {
+            outputStream.writeObject(this);
         }
-        writer.close();
     }
 
     public void addPointOfInterest(String name, float x, float y) {
-        Vec2D point = new Vec2D(x, y);
-        pointsOfInterest.add(new PointOfInterest(name, point));
+        pointsOfInterest.add(new PointOfInterest(name, x, y));
     }
 
     public int getWidth() {
@@ -152,6 +122,23 @@ public class Map implements Serializable {
                 '}';
     }
 
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj);
+    }
+
+    @Override
+    public int compareTo(Object o) {
+        // sort by width and height; from smallest maps to biggest maps
+        Map other = (Map) o;
+        return this.width * this.height - other.width * other.height;
+    }
+
     private int width;
     private int height;
     // amount of real world distance unit equivalent to 1 map unit
@@ -162,5 +149,7 @@ public class Map implements Serializable {
     private String publisher;
     // points on the map
     private List<PointOfInterest> pointsOfInterest;
+
+
 }
 

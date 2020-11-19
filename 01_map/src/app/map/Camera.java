@@ -38,7 +38,7 @@ public class Camera {
     public List<PointOfInterest> getVisiblePois() {
         return map.getPointsOfInterest().
                 stream().
-                filter((poi) -> isVisible(poi.getPoint())).
+                filter((poi) -> isVisible(new Vec2D(poi.getX(), poi.getY()))).
                 collect(Collectors.toUnmodifiableList());
     }
 

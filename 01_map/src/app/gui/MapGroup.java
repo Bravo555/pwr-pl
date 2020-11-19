@@ -6,9 +6,12 @@ package app.gui;
 import app.map.Map;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
-public class WindowApp {
-    static Map map;
+public class MapGroup {
+    static List<Map> maps = new ArrayList<>();
 
     static JFrame frame = new JFrame("Map App");
 
@@ -18,34 +21,50 @@ public class WindowApp {
     static JTextField heightText = new JTextField(5);
     static JTextField scaleText = new JTextField(6);
 
+    static MapTable table = new MapTable(maps);
+
     public static void main(String[] args) {
         javax.swing.SwingUtilities.invokeLater(() -> {
-            frame.setSize(350, 300);
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setSize(450, 500);
+            frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
             JPanel panel = new JPanel();
-            panel.add(new JLabel("map name"));
-            panel.add(nameText);
-            panel.add(new JLabel("publisher"));
-            panel.add(publisherText);
-            panel.add(new JLabel("Width"));
-            panel.add(widthText);
-            panel.add(new JLabel("Height"));
-            panel.add(heightText);
-            panel.add(new JLabel("Scale"));
-            panel.add(scaleText);
+
+            panel.add(table);
 
             JButton newButton = new JButton("new map");
             newButton.addActionListener(actionEvent -> {
-                setMap(MapWindowDialog.changeMapData(frame, null));
+                Map newMap = MapManager.newMap(frame);
+                if(newMap == null) {
+                    return;
+                }
+                addMap(newMap);
+                table.refreshView();
             });
             panel.add(newButton);
 
             JButton changeButton = new JButton("change map");
             changeButton.addActionListener(actionEvent -> {
-                setMap(MapWindowDialog.changeMapData(frame, map));
+                int index = table.getSelectedIndex();
+                if(index < 0) {
+                    return;
+                }
+                Map selected = maps.get(index);
+                MapManager.changeMap(frame, selected);
+                table.refreshView();
             });
             panel.add(changeButton);
+
+            JButton removeButton = new JButton("remove map");
+            removeButton.addActionListener(actionEvent -> {
+                int index = table.getSelectedIndex();
+                if(index < 0) {
+                    return;
+                }
+                maps.remove(index);
+                table.refreshView();
+            });
+            panel.add(removeButton);
 
             JButton loadButton = new JButton("load map");
             loadButton.addActionListener(actionEvent -> {
@@ -55,15 +74,35 @@ public class WindowApp {
 
             JButton saveButton = new JButton("save map");
             saveButton.addActionListener(actionEvent -> {
-                saveMap();
+                int index = table.getSelectedIndex();
+                if(index < 0) {
+                    return;
+                }
+                Map selected = maps.get(index);
+                saveMap(selected);
             });
             panel.add(saveButton);
+
+            JButton sortBySizeButton = new JButton("Sort by size (default)");
+            sortBySizeButton.addActionListener(actionEvent -> {
+                maps.sort(null);
+                table.refreshView();
+            });
+            panel.add(sortBySizeButton);
+
+            JButton sortByNameButton = new JButton("Sort by name");
+            sortByNameButton.addActionListener(actionEvent -> {
+                maps.sort(Comparator.comparing((Map::getName)));
+                table.refreshView();
+            });
+            panel.add(sortByNameButton);
+
 
             JMenuBar menuBar = new JMenuBar();
             JMenu fileMenu = new JMenu("File");
             var newItem = new JMenuItem("New");
             newItem.addActionListener(actionEvent -> {
-                setMap(MapWindowDialog.changeMapData(frame, null));
+                addMap(MapWindowDialog.changeMapData(frame, null));
             });
             var openItem = new JMenuItem("Open");
             openItem.addActionListener(actionEvent -> {
@@ -71,7 +110,7 @@ public class WindowApp {
             });
             var saveItem = new JMenuItem("Save");
             saveItem.addActionListener(actionEvent -> {
-                saveMap();
+//                saveMap();
             });
 
 
@@ -98,6 +137,8 @@ public class WindowApp {
             frame.setJMenuBar(menuBar);
 
             frame.setContentPane(panel);
+
+            table.refreshView();
             frame.setVisible(true);
         });
     }
@@ -111,13 +152,13 @@ public class WindowApp {
 
         try {
             Map newMap = Map.loadFromFile(chooser.getSelectedFile());
-            setMap(newMap);
+            addMap(newMap);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(frame, e.getMessage(), "Błąd", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    static void saveMap() {
+    static void saveMap(Map map) {
         JFileChooser chooser = new JFileChooser("./");
         int status = chooser.showSaveDialog(frame);
         if(status != JFileChooser.APPROVE_OPTION) {
@@ -130,15 +171,11 @@ public class WindowApp {
         }
     }
 
-    static void setMap(Map newMap) {
+    static void addMap(Map newMap) {
         if(newMap == null) {
             return;
         }
-        map = newMap;
-        nameText.setText(map.getName());
-        publisherText.setText(map.getPublisher());
-        widthText.setText(Integer.toString(map.getWidth()));
-        heightText.setText(Integer.toString(map.getHeight()));
-        scaleText.setText(Integer.toString(map.getScale()));
+        maps.add(newMap);
+        table.refreshView();
     }
 }

@@ -80,7 +80,7 @@ public class ConsoleApp {
                     System.out.println("Punkty zainteresowania:");
                     map.getPointsOfInterest().stream().forEach(
                         (poi) -> System.out.printf("\t%s - x: %f, y: %f\n",
-                                poi.getName(), poi.getPoint().x(), poi.getPoint().y())
+                                poi.getName(), poi.getX(), poi.getY())
                     );
                     break;
                 default:
