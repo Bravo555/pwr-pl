@@ -1,12 +1,16 @@
 import java.awt.*;
+import java.awt.font.FontRenderContext;
+import java.awt.geom.Rectangle2D;
+import java.io.Serializable;
 
-public class Node {
+public class Node implements Serializable {
     protected int x;
     protected int y;
 
     protected int r;
 
     private Color color;
+    String name;
 
 
     public Node(int x, int y) {
@@ -14,12 +18,15 @@ public class Node {
         this.y = y;
         this.r = 10;
 
+        name = new String("?");
+
         this.color = Color.WHITE;
     }
 
     public int getX() {
         return x;
     }
+
     public void setX(int x) {
         this.x = x;
     }
@@ -48,6 +55,14 @@ public class Node {
         this.color = color;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public boolean isMouseOver(int mx, int my){
         return (x-mx)*(x-mx)+(y-my)*(y-my)<=r*r;
     }
@@ -57,6 +72,10 @@ public class Node {
         g.fillOval(x-r, y-r, 2*r, 2*r);
         g.setColor(Color.BLACK);
         g.drawOval(x-r, y-r, 2*r, 2*r);
+        Font font = new Font("serif", Font.PLAIN, 16);
+        FontRenderContext frc = ((Graphics2D)g).getFontRenderContext();
+        Rectangle2D bounds = font.getStringBounds(this.name, frc);
+        g.drawString(this.name, this.x - (int)bounds.getWidth() / 2, this.y + (int)bounds.getHeight() / 4);
     }
 
     @Override

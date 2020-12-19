@@ -38,6 +38,7 @@ public class MapGroup {
                 if(newMap == null) {
                     return;
                 }
+                System.out.println(newMap.hashCode());
                 addMap(newMap);
                 table.refreshView();
             });
@@ -93,6 +94,7 @@ public class MapGroup {
             JButton sortByNameButton = new JButton("Sort by name");
             sortByNameButton.addActionListener(actionEvent -> {
                 maps.sort(Comparator.comparing((Map::getName)));
+                maps.sort((m1, m2) -> (m1.getName().compareTo(m2.getName())));
                 table.refreshView();
             });
             panel.add(sortByNameButton);

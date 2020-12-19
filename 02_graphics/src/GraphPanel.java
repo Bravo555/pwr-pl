@@ -12,6 +12,8 @@ public class GraphPanel extends JPanel implements MouseListener, MouseMotionList
     private boolean mouseButtonRight = false;
 
     protected Node nodeUnderCursor;
+    protected Edge edgeUnderCursor;
+    protected Node createEdgeFrom;
     protected int mouseCursor = Cursor.DEFAULT_CURSOR;
 
     public GraphPanel() {
@@ -22,8 +24,13 @@ public class GraphPanel extends JPanel implements MouseListener, MouseMotionList
         requestFocus();
     }
 
+    Graph getGraph() {
+        return graph;
+    }
+
     void setGraph(Graph graph) {
         this.graph = graph;
+        repaint();
     }
 
     @Override
@@ -47,7 +54,14 @@ public class GraphPanel extends JPanel implements MouseListener, MouseMotionList
 
     @Override
     public void mousePressed(MouseEvent event) {
-        if (event.getButton()==1) mouseButtonLeft = true;
+        if (event.getButton()==1) {
+            if (this.createEdgeFrom != null && this.nodeUnderCursor != null && this.nodeUnderCursor != this.createEdgeFrom) {
+                this.graph.addEdge(new Edge(this.createEdgeFrom, this.nodeUnderCursor));
+                this.repaint();
+            }
+            this.createEdgeFrom = null;
+            mouseButtonLeft = true;
+        }
         if (event.getButton()==3) mouseButtonRight = true;
         setMouseCursor(event);
     }
@@ -62,7 +76,10 @@ public class GraphPanel extends JPanel implements MouseListener, MouseMotionList
         if (event.getButton() == 3) {
             if (nodeUnderCursor != null) {
                 createPopupMenu(event, nodeUnderCursor);
-            } else {
+            } else if(edgeUnderCursor != null) {
+                createPopupMenu(event, edgeUnderCursor);
+            }
+            else {
                 createPopupMenu(event);
             }
         }
@@ -151,14 +168,24 @@ public class GraphPanel extends JPanel implements MouseListener, MouseMotionList
 
     protected void setMouseCursor(MouseEvent event) {
         nodeUnderCursor = findNode(event);
+        edgeUnderCursor = findEdge(event);
         if (nodeUnderCursor != null) {
             mouseCursor = Cursor.HAND_CURSOR;
         } else if (mouseButtonLeft) {
             mouseCursor = Cursor.MOVE_CURSOR;
+        } else if(createEdgeFrom != null) {
+            mouseCursor = 3;
         } else {
             mouseCursor = Cursor.DEFAULT_CURSOR;
         }
+
         setCursor(Cursor.getPredefinedCursor(mouseCursor));
+
+        Edge edge = findEdge(event);
+        if(edge != null) {
+            edge.hover(this);
+        }
+
         mouseX = event.getX();
         mouseY = event.getY();
     }
@@ -194,6 +221,13 @@ public class GraphPanel extends JPanel implements MouseListener, MouseMotionList
         JMenuItem menuItem;
 
         JPopupMenu popup = new JPopupMenu();
+
+        menuItem = new JMenuItem("Create new edge from this node");
+        menuItem.addActionListener(actionEvent -> {
+            createEdgeFrom = nodeUnderCursor;
+        });
+        popup.add(menuItem);
+
         menuItem = new JMenuItem("Change node color");
 
         menuItem.addActionListener((a) -> {
@@ -208,6 +242,19 @@ public class GraphPanel extends JPanel implements MouseListener, MouseMotionList
         });
 
         popup.add(menuItem);
+
+        menuItem = new JMenuItem("Change text");
+        menuItem.addActionListener(actionEvent -> {
+            String name = (String)JOptionPane.showInputDialog(this, "Enter new name:",
+                    "Change node name", 3, (Icon)null, (Object[])null, node.getName());
+            if (name != null) {
+                node.setName(name);
+            }
+
+            this.repaint();
+        });
+        popup.add(menuItem);
+
         menuItem = new JMenuItem("Remove this node");
 
         // Implementacja s�uchacza zdarze� za pomoc� wyra�enia Lambda
@@ -220,14 +267,34 @@ public class GraphPanel extends JPanel implements MouseListener, MouseMotionList
         popup.show(event.getComponent(), event.getX(), event.getY());
     }
 
+    protected void createPopupMenu(MouseEvent event, Edge edge) {
+        JPopupMenu popup = new JPopupMenu();
+        JMenuItem menuItem = new JMenuItem("Remove this edge");
+        menuItem.addActionListener((a) -> {
+            this.graph.removeEdge(edge);
+            this.repaint();
+        });
+        popup.add(menuItem);
+        popup.show(event.getComponent(), event.getX(), event.getY());
+    }
+
 
     private Node findNode(MouseEvent event){
         return findNode(event.getX(), event.getY());
     }
 
-    private Node findNode(int mx, int my){
+    private Node findNode(int mx, int my) {
         return graph.getNodes().stream()
                 .filter(node -> node.isMouseOver(mx, my))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private Edge findEdge(MouseEvent event) {
+        int mx = event.getX();
+        int my = event.getY();
+        return graph.getEdges().stream()
+                .filter(edge -> edge.isMouseOver(mx, my))
                 .findFirst()
                 .orElse(null);
     }

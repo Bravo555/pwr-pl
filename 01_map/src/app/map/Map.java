@@ -7,6 +7,7 @@ package app.map;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Map implements Serializable, Comparable {
@@ -124,7 +125,17 @@ public class Map implements Serializable, Comparable {
 
     @Override
     public int hashCode() {
-        return super.hashCode();
+
+        return Arrays.hashCode(new Object[]{
+            width           ,
+            height          ,
+            scale           ,
+            name            ,
+            publisher       ,
+            pointsOfInterest
+
+        });
+
     }
 
     @Override
