@@ -28,9 +28,6 @@ import javax.swing.ScrollPaneConstants;
 
 
 class MyClient extends JFrame implements ActionListener, Runnable{
-
-    private static final long serialVersionUID = 1L;
-
     public static void main(String[] args) {
         String name;
         String host;
@@ -44,11 +41,11 @@ class MyClient extends JFrame implements ActionListener, Runnable{
 
 
 
-    private JTextField messageField = new JTextField(20);
-    private JTextArea  textArea     = new JTextArea(15,18);
+    private final JTextField messageField = new JTextField(20);
+    private final JTextArea  textArea     = new JTextArea(15,18);
 
     static final int SERVER_PORT = 25000;
-    private String name;
+    private final String name;
     private String serverHost;
     private Socket socket;
     private ObjectOutputStream outputStream;
@@ -68,7 +65,7 @@ class MyClient extends JFrame implements ActionListener, Runnable{
                     inputStream.close();
                     socket.close();
                 } catch (IOException e) {
-                    System.out.println(e);
+                    e.printStackTrace();
                 }
             }
             @Override

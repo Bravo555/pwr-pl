@@ -27,9 +27,6 @@ import javax.swing.ScrollPaneConstants;
 
 
 class MyServer extends JFrame implements ActionListener, Runnable {
-
-    private static final long serialVersionUID = 1L;
-
     static final int SERVER_PORT = 25000;
 
     public static void main(String [] args){
@@ -37,31 +34,31 @@ class MyServer extends JFrame implements ActionListener, Runnable {
     }
 
 
-    private JLabel clientLabel   = new JLabel("Odbiorca:");
-    private JLabel messageLabel  = new JLabel("Napisz:");
-    private JLabel textAreaLabel = new JLabel("Przestrzeń Dialogu:");
-    private JComboBox<ClientThread> clientMenu = new JComboBox<ClientThread>();
-    private JTextField messageField = new JTextField(20);
-    private JTextArea  textArea  = new JTextArea(15,18);
-    private JScrollPane scroll = new JScrollPane(textArea,
-            ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
-            ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    private final JComboBox<ClientThread> clientMenu = new JComboBox<>();
+    private final JTextField messageField = new JTextField(20);
+    private final JTextArea  textArea  = new JTextArea(15,18);
 
     MyServer(){
         super("Przestrzeń Dialogu Szymona Hołowni");
         setSize(300,340);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         JPanel panel = new JPanel();
+        JLabel clientLabel = new JLabel("Odbiorca:");
         panel.add(clientLabel);
-        clientMenu.setPrototypeDisplayValue(new ClientThread("#########################"));
+        clientMenu.setPrototypeDisplayValue(new ClientThread());
         panel.add(clientMenu);
+        JLabel messageLabel = new JLabel("Napisz:");
         panel.add(messageLabel);
         panel.add(messageField);
         messageField.addActionListener(this);
         textArea.setLineWrap(true);
         textArea.setWrapStyleWord(true);
+        JLabel textAreaLabel = new JLabel("Przestrzeń Dialogu:");
         panel.add(textAreaLabel);
         textArea.setEditable(false);
+        JScrollPane scroll = new JScrollPane(textArea,
+                ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         panel.add(scroll);
         setContentPane(panel);
         setVisible(true);
@@ -121,7 +118,7 @@ class MyServer extends JFrame implements ActionListener, Runnable {
                 }
             }
         } catch (IOException e) {
-            System.out.println(e);
+            e.printStackTrace();
             if (!socket_created) {
                 JOptionPane.showMessageDialog(null, "Gniazdko dla serwera nie mo�e by� utworzone");
                 System.exit(0);
@@ -145,8 +142,8 @@ class ClientThread implements Runnable {
     // UWAGA: Ten konstruktor tworzy nieaktywny obiekt ClientThread,
     // kt�ry posiada tylko nazw� prototypow�, potrzebn� dla
     // metody setPrototypeDisplayValue z klasy JComboBox
-    ClientThread(String prototypeDisplayValue){
-        name = prototypeDisplayValue;
+    ClientThread(){
+        name = "#########################";
     }
 
     ClientThread(MyServer server, Socket socket) {
@@ -177,7 +174,7 @@ class ClientThread implements Runnable {
     public void run(){
         String message;
         try( ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
-             ObjectInputStream input = new ObjectInputStream(socket.getInputStream()); )
+             ObjectInputStream input = new ObjectInputStream(socket.getInputStream()))
         {
             outputStream = output;
             name = (String)input.readObject();
