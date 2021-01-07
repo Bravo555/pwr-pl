@@ -6,14 +6,13 @@
  *   Data: 1 grudnia 2017 r.
  */
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashSet;
 
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
@@ -25,109 +24,93 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
-class MyServer extends JFrame implements ActionListener, Runnable {
+
+class MyServer extends JFrame {
     static final int SERVER_PORT = 25000;
+    private final HashSet<ClientThread> clients = new HashSet<>();
+    private final JTextField messageField = new JTextField(20);
+    private final JTextArea  textArea  = new JTextArea(15,18);
 
     public static void main(String [] args){
         new MyServer();
     }
 
-
-    private final JComboBox<ClientThread> clientMenu = new JComboBox<>();
-    private final JTextField messageField = new JTextField(20);
-    private final JTextArea  textArea  = new JTextArea(15,18);
-
     MyServer(){
-        super("Przestrzeń Dialogu Szymona Hołowni");
-        setSize(300,340);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        JPanel panel = new JPanel();
-        JLabel clientLabel = new JLabel("Odbiorca:");
-        panel.add(clientLabel);
-        clientMenu.setPrototypeDisplayValue(new ClientThread());
-        panel.add(clientMenu);
-        JLabel messageLabel = new JLabel("Napisz:");
-        panel.add(messageLabel);
-        panel.add(messageField);
-        messageField.addActionListener(this);
-        textArea.setLineWrap(true);
-        textArea.setWrapStyleWord(true);
-        JLabel textAreaLabel = new JLabel("Przestrzeń Dialogu:");
-        panel.add(textAreaLabel);
-        textArea.setEditable(false);
-        JScrollPane scroll = new JScrollPane(textArea,
-                ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
-                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        panel.add(scroll);
-        setContentPane(panel);
-        setVisible(true);
-        new Thread(this).start(); // Uruchomienie dodatkowego watka
-        // czekajacego na nowych klientow
+//        super("Przestrzeń Dialogu Szymona Hołowni");
+//        setSize(300,340);
+//        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//        JPanel panel = new JPanel();
+//        JLabel clientLabel = new JLabel("Odbiorca:");
+//        panel.add(clientLabel);
+////        clientMenu.setPrototypeDisplayValue(new ClientThread());
+////        panel.add(clientMenu);
+//        JLabel messageLabel = new JLabel("Napisz:");
+//        panel.add(messageLabel);
+//        panel.add(messageField);
+//        messageField.addActionListener(actionEvent -> {
+//            ClientThread client = (ClientThread)clientMenu.getSelectedItem();
+//            if (client != null) {
+//                String message = messageField.getText();
+//                printMessage(client.getName(), message);
+//                client.sendMessage(message);
+//            }
+//        });
+//        textArea.setLineWrap(true);
+//        textArea.setWrapStyleWord(true);
+//        JLabel textAreaLabel = new JLabel("Przestrzeń Dialogu:");
+//        panel.add(textAreaLabel);
+//        textArea.setEditable(false);
+//        JScrollPane scroll = new JScrollPane(textArea,
+//                ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+//                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+//        panel.add(scroll);
+//        setContentPane(panel);
+//        setVisible(true);
+        new Thread(() -> {
+            boolean socket_created = false;
+
+            try (ServerSocket serwer = new ServerSocket(SERVER_PORT)) {
+                String host = InetAddress.getLocalHost().getHostName();
+                System.out.println("Serwer zosta� uruchomiony na hoscie " + host);
+                socket_created = true;
+
+                while (true) {
+                    Socket socket = serwer.accept();
+                    if (socket != null) {
+
+                        new ClientThread(this, socket);
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                if (!socket_created) {
+                    JOptionPane.showMessageDialog(null, "Gniazdko dla serwera nie mo�e by� utworzone");
+                    System.exit(0);
+                } else {
+                    JOptionPane.showMessageDialog(null, "BLAD SERWERA: Nie mozna polaczyc sie z klientem ");
+                }
+            }
+        }).start();
     }
 
-    synchronized public void printReceivedMessage(ClientThread client, String message){
-        String text = textArea.getText();
-        textArea.setText(client.getName() + " >>> " + message + "\n" + text);
+    synchronized public void printMessage(String name, String message){
+        ChatUtils.printMessage(name, message, textArea);
     }
 
-    synchronized public void printSentMessage(ClientThread client, String message){
-        String text = textArea.getText();
-        textArea.setText(client.getName() + " <<< " + message + "\n" + text);
+    synchronized public HashSet<ClientThread> getClients() {
+        return clients;
     }
 
     synchronized void addClient(ClientThread client){
-        clientMenu.addItem(client);
+        clients.add(client);
     }
 
     synchronized void removeClient(ClientThread client){
-        clientMenu.removeItem(client);
+        clients.remove(client);
     }
-
-    public void actionPerformed(ActionEvent event){
-        String message;
-        Object source = event.getSource();
-        if (source==messageField){
-            ClientThread client = (ClientThread)clientMenu.getSelectedItem();
-            if (client != null) {
-                message = messageField.getText();
-                printSentMessage(client, message);
-                client.sendMessage(message);
-            }
-        }
-        repaint();
-    }
-
-
-    public void run() {
-        boolean socket_created = false;
-
-        // inicjalizacja po��cze� sieciowych
-        try (ServerSocket serwer = new ServerSocket(SERVER_PORT)) {
-            String host = InetAddress.getLocalHost().getHostName();
-            System.out.println("Serwer zosta� uruchomiony na hoscie " + host);
-            socket_created = true;
-            // koniec inicjalizacji po��cze� sieciowych
-
-            while (true) {  // oczekiwanie na po��czenia przychdz�ce od klient�w
-                Socket socket = serwer.accept();
-                if (socket != null) {
-                    // Tworzy nowy w�tek do obs�ugi klienta, kt�re
-                    // w�a�nie po��czy� si� z serwerem.
-                    new ClientThread(this, socket);
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            if (!socket_created) {
-                JOptionPane.showMessageDialog(null, "Gniazdko dla serwera nie mo�e by� utworzone");
-                System.exit(0);
-            } else {
-                JOptionPane.showMessageDialog(null, "BLAD SERWERA: Nie mozna polaczyc sie z klientem ");
-            }
-        }
-    }
-
 }
 
 
@@ -136,8 +119,8 @@ class ClientThread implements Runnable {
     private Socket socket;
     private String name;
     private MyServer myServer;
-
-    private ObjectOutputStream outputStream = null;
+    private ObjectOutputStream outputStream;
+    private int serverPort;
 
     // UWAGA: Ten konstruktor tworzy nieaktywny obiekt ClientThread,
     // kt�ry posiada tylko nazw� prototypow�, potrzebn� dla
@@ -149,8 +132,7 @@ class ClientThread implements Runnable {
     ClientThread(MyServer server, Socket socket) {
         myServer = server;
         this.socket = socket;
-        new Thread(this).start();  // Utworzenie dodatkowego watka
-        // do obslugi komunikacji sieciowej
+        new Thread(this).start();
     }
 
     public String getName(){ return name; }
@@ -170,18 +152,29 @@ class ClientThread implements Runnable {
         }
     }
 
+    public void run() {
 
-    public void run(){
         String message;
         try( ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
              ObjectInputStream input = new ObjectInputStream(socket.getInputStream()))
         {
             outputStream = output;
             name = (String)input.readObject();
+            serverPort = (Integer)input.readObject();
+            System.out.println("polaczenie od: " + socket.getRemoteSocketAddress() + " imie: " + name + ", port = " + serverPort);
             myServer.addClient(this);
+
+            var clients =
+                myServer.getClients().stream()
+                    .map(clientThread -> new Client(clientThread.socket.getInetAddress().getHostName(), clientThread.serverPort))
+                    .filter(client -> client.serverPort != this.serverPort)
+                    .collect(Collectors.toList());
+            output.writeObject(clients);
+            System.out.println("wysylam innych klientow: " + clients);
+
             while(true){
                 message = (String)input.readObject();
-                myServer.printReceivedMessage(this,message);
+                myServer.printMessage(this.name, message);
                 if (message.equals("exit")){
                     myServer.removeClient(this);
                     break;
@@ -193,5 +186,4 @@ class ClientThread implements Runnable {
             myServer.removeClient(this);
         }
     }
-
 }
